@@ -6,7 +6,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
-import com.hong.PostService_MCP_Server.service.MCPService;
+import com.hong.PostService_MCP_Server.service.UserService;
 
 @SpringBootApplication
 public class PostServiceMcpServerApplication {
@@ -16,8 +16,8 @@ public class PostServiceMcpServerApplication {
 	}
 
 	@Bean
-	public ToolCallbackProvider BmiTools(MCPService mcpService) {
-		return MethodToolCallbackProvider.builder().toolObjects(mcpService).build();
+	public ToolCallbackProvider BmiTools(UserService userService) {
+		return MethodToolCallbackProvider.builder().toolObjects(userService).build();
 	}
 
 }

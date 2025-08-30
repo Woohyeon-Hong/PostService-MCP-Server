@@ -1,4 +1,4 @@
-package com.hong.PostService_MCP_Server.dto;
+package com.hong.PostService_MCP_Server.dto.userDto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;

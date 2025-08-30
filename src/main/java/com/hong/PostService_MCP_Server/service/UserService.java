@@ -3,7 +3,7 @@ package com.hong.PostService_MCP_Server.service;
 import java.net.URI;
 import java.util.List;
 
-import com.hong.PostService_MCP_Server.dto.LoginRequest;
+import com.hong.PostService_MCP_Server.dto.userDto.LoginRequest;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -11,15 +11,23 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
-import com.hong.PostService_MCP_Server.dto.SignUpRequest;
+import com.hong.PostService_MCP_Server.dto.userDto.SignUpRequest;
 
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class MCPService {
+public class UserService {
 
     private final RestClient restClient;
+    private final static String SERVICE_URL = "http://localhost:8080/v2/users";
+    public UserService() {
+        this.restClient =  RestClient.builder()
+                .baseUrl(SERVICE_URL)
+                .defaultHeader("Origin", "http://localhost:8080")
+                .defaultHeader("Content-Type", "application/json")
+                .build();
+    }
 
     @Tool(description = "일반 회원가입을 진행한다. username, password, email, nickname은 필수이다.")
     public URI signUp(
@@ -34,7 +42,6 @@ public class MCPService {
         try {
             ResponseEntity<Void> response = restClient
                     .post()
-                    .uri("/users")
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(signUpRequest)
                     .retrieve()
@@ -59,7 +66,7 @@ public class MCPService {
         try {
             ResponseEntity<Void> response = restClient
                     .post()
-                    .uri("/users/admin")
+                    .uri("/admin")
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(signUpRequest)
                     .retrieve()
@@ -82,7 +89,7 @@ public class MCPService {
         try {
             ResponseEntity<Void> response = restClient
                     .post()
-                    .uri("/users/login")
+                    .uri("/login")
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(loginRequest)
                     .retrieve()
