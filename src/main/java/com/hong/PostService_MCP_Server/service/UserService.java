@@ -2,18 +2,24 @@ package com.hong.PostService_MCP_Server.service;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 
-import com.hong.PostService_MCP_Server.dto.userDto.LoginRequest;
+import com.hong.PostService_MCP_Server.dto.post.Page;
+import com.hong.PostService_MCP_Server.dto.post.Page.PostSummaryResponse;
+import com.hong.PostService_MCP_Server.dto.user.LoginRequest;
 import org.springframework.ai.tool.annotation.Tool;
+import org.springframework.ai.tool.annotation.ToolParam;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
-import com.hong.PostService_MCP_Server.dto.userDto.SignUpRequest;
+import com.hong.PostService_MCP_Server.dto.user.SignUpRequest;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.util.UriBuilder;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +32,7 @@ public class UserService {
                 .baseUrl(SERVICE_URL)
                 .defaultHeader("Origin", "http://localhost:8080")
                 .defaultHeader("Content-Type", "application/json")
+                .defaultHeader("Accept", "application/geo+json")
                 .build();
     }
 
@@ -103,6 +110,31 @@ public class UserService {
             throw new RuntimeException("로그인 실패: JWT 토큰이 응답에 포함되지 않았습니다.");
         } catch (RestClientException e) {
             throw new RuntimeException("로그인 실패: 잘못된 사용자 이름 또는 비밀번호입니다.");
+        }
+    }
+
+
+    @Tool(description = "로그인한 회원이 작성한 게시글들을 조회한다. authorization 헤더는 필수이다.")
+    public List<PostSummaryResponse> getMemberPosts(String authorization,
+                                                    @ToolParam(description = "조회할 페이지 번호 (0부터 시작)") Optional<Integer> page,
+                                                    @ToolParam(description = "한 페이지에 보여줄 게시글 수")Optional<Integer> size) {
+        try {
+            Page<PostSummaryResponse> postSummaryPage = restClient
+                    .get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/me/posts-simple")
+                            .queryParamIfPresent("page", page)
+                            .queryParamIfPresent("size", size)
+                            .build()
+                    )
+                    .header("Authorization", authorization)
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<Page<PostSummaryResponse>>() {});
+
+            return postSummaryPage.content();
+
+        } catch (RestClientException e) {
+            throw new RuntimeException("회원 게시글 조회 실패: " + e.getMessage(), e);
         }
     }
 }
