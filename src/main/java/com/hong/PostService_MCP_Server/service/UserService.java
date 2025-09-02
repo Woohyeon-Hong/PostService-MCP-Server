@@ -9,6 +9,7 @@ import java.util.Optional;
 import com.hong.PostService_MCP_Server.dto.post.Page;
 import com.hong.PostService_MCP_Server.dto.post.Page.PostSummaryResponse;
 import com.hong.PostService_MCP_Server.dto.user.LoginRequest;
+import com.hong.PostService_MCP_Server.dto.user.PasswordUpdateRequest;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.core.ParameterizedTypeReference;
@@ -183,5 +184,23 @@ public class UserService {
         }
     }
 
+    @Tool(description = "로그인한 회원의 비밀번호를 수정한다.")
+    public void updatePassword(String authorization,
+                               @ToolParam(description = "기존 비밀번호") String currentPassword,
+                               @ToolParam(description = "변경할 비밀번호") String newPassword) {
 
+        PasswordUpdateRequest request = new PasswordUpdateRequest(currentPassword, newPassword);
+
+        try {
+            restClient
+                    .patch()
+                    .uri("/me/password")
+                    .header("Authorization", authorization)
+                    .body(request)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (RestClientException e) {
+            throw new RuntimeException("회원 비밀번호 수정 실패: " + e.getMessage(), e);
+        }
+    }
 }
