@@ -1,7 +1,9 @@
 package com.hong.PostService_MCP_Server.service;
 
 import java.net.URI;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import com.hong.PostService_MCP_Server.dto.post.Page;
@@ -19,7 +21,6 @@ import org.springframework.web.client.RestClientException;
 import com.hong.PostService_MCP_Server.dto.user.SignUpRequest;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.util.UriBuilder;
 
 @Service
 @RequiredArgsConstructor
@@ -113,7 +114,8 @@ public class UserService {
         }
     }
 
-
+    //TODO
+    // authorization 헤더를 직접 받는게 아니라 toolContext 사용하도록 변경 -> jwt를 직접 사용하는 것은 위험
     @Tool(description = "로그인한 회원이 작성한 게시글들을 조회한다. authorization 헤더는 필수이다.")
     public List<PostSummaryResponse> getMemberPosts(String authorization,
                                                     @ToolParam(description = "조회할 페이지 번호 (0부터 시작)") Optional<Integer> page,
@@ -137,4 +139,49 @@ public class UserService {
             throw new RuntimeException("회원 게시글 조회 실패: " + e.getMessage(), e);
         }
     }
+    @Tool(description = "로그인한 회원의 username을 수정한다.  단, 기존 다른 회원과 중복 불가")
+    public void updateUsername(String authorization,
+                                 @ToolParam(description = "변경할 사용자 이름 (3~20자 사이)") String username) {
+
+        Map<String, String> updateRequest = new HashMap<>();
+        updateRequest.put("username", username);
+
+        update(authorization, updateRequest);
+    }
+
+    @Tool(description = "로그인한 회원의 email을 수정한다. 단, 기존 다른 회원과 중복 불가")
+    public void updateEmail(String authorization,
+                                 @ToolParam(description = "변경할 email 주소") String email) {
+
+        Map<String, String> updateRequest = new HashMap<>();
+        updateRequest.put("email", email);
+
+        update(authorization, updateRequest);
+    }
+
+    @Tool(description = "로그인한 회원의 nickname을 수정한다. 단, 기존 다른 회원과 중복 불가")
+    public void updateNickname(String authorization,
+                                 @ToolParam(description = "변경할 닉네임") String nickname) {
+
+        Map<String, String> updateRequest = new HashMap<>();
+        updateRequest.put("nickname", nickname);
+
+        update(authorization, updateRequest);
+    }
+
+    private void update(String authorization, Map<String, String> updateRequest) {
+        try {
+            restClient
+                    .patch()
+                    .uri("/me")
+                    .header("Authorization", authorization)
+                    .body(updateRequest)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (RestClientException e) {
+            throw new RuntimeException("회원 정보 수정 실패: " + e.getMessage(), e);
+        }
+    }
+
+
 }
