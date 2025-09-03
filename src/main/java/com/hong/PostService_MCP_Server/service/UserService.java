@@ -8,6 +8,8 @@ import java.util.Optional;
 
 import com.hong.PostService_MCP_Server.dto.post.Page;
 import com.hong.PostService_MCP_Server.dto.post.Page.PostSummaryResponse;
+import com.hong.PostService_MCP_Server.dto.post.PostCreateRequest;
+import com.hong.PostService_MCP_Server.dto.post.PostDetailResponse;
 import com.hong.PostService_MCP_Server.dto.user.LoginRequest;
 import com.hong.PostService_MCP_Server.dto.user.PasswordUpdateRequest;
 import com.hong.PostService_MCP_Server.dto.user.SignUpWithoutEmailRequest;
@@ -143,15 +145,15 @@ public class UserService {
     // authorization 헤더를 직접 받는게 아니라 toolContext 사용하도록 변경 -> jwt를 직접 사용하는 것은 위험
     @Tool(description = "로그인한 회원이 작성한 게시글들을 조회한다. authorization 헤더는 필수이다.")
     public List<PostSummaryResponse> getMemberPosts(String authorization,
-                                                    @ToolParam(description = "조회할 페이지 번호 (0부터 시작)") Optional<Integer> page,
-                                                    @ToolParam(description = "한 페이지에 보여줄 게시글 수")Optional<Integer> size) {
+                                                    @ToolParam(description = "조회할 페이지 번호 (0부터 시작)") int page,
+                                                    @ToolParam(description = "한 페이지에 보여줄 게시글 수")int size) {
         try {
             Page<PostSummaryResponse> postSummaryPage = restClient
                     .get()
                     .uri(uriBuilder -> uriBuilder
                             .path("/me/posts-simple")
-                            .queryParamIfPresent("page", page)
-                            .queryParamIfPresent("size", size)
+                            .queryParam("page", page)
+                            .queryParam("size", size)
                             .build()
                     )
                     .header("Authorization", authorization)
@@ -164,6 +166,7 @@ public class UserService {
             throw new RuntimeException("회원 게시글 조회 실패: " + e.getMessage(), e);
         }
     }
+
     @Tool(description = "로그인한 회원의 username을 수정한다.  단, 기존 다른 회원과 중복 불가")
     public void updateUsername(String authorization,
                                  @ToolParam(description = "변경할 사용자 이름 (3~20자 사이)") String username) {
@@ -239,6 +242,28 @@ public class UserService {
                     .toBodilessEntity();
         } catch (RestClientException e) {
             throw new RuntimeException("회원 탈퇴 실패: " + e.getMessage(), e);
+        }
+    }
+
+    @Tool(description = "로그인한 회원으로 게시글을 작성한다.")
+    public void writePost(
+            String authorization,
+            String title,
+            String content
+    ) {
+        PostCreateRequest request = new PostCreateRequest(title, content);
+
+        try {
+            restClient
+                    .post()
+                    .uri("/me/posts")
+                    .header("Authorization", authorization)
+                    .body(request)
+                    .retrieve()
+                    .body(PostDetailResponse.class);
+
+        } catch (RestClientException e) {
+            throw new RuntimeException("게시글 작성 실패: " + e.getMessage(), e);
         }
     }
 }
