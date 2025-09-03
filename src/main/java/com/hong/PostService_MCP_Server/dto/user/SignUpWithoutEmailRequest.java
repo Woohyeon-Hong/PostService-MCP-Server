@@ -4,9 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties (ignoreUnknown = true)
-public record SignUpRequest(
+public record SignUpWithoutEmailRequest(
     @JsonProperty("username") String username, 
-    @JsonProperty("password") String password, 
-    @JsonProperty("email") String email, 
+    @JsonProperty("password") String password,
     @JsonProperty("nickname") String nickname) {
 }
