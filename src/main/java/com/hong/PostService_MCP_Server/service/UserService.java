@@ -10,6 +10,7 @@ import com.hong.PostService_MCP_Server.dto.post.Page;
 import com.hong.PostService_MCP_Server.dto.post.Page.PostSummaryResponse;
 import com.hong.PostService_MCP_Server.dto.user.LoginRequest;
 import com.hong.PostService_MCP_Server.dto.user.PasswordUpdateRequest;
+import com.hong.PostService_MCP_Server.dto.user.SignUpWithoutEmailRequest;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.core.ParameterizedTypeReference;
@@ -19,7 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
-import com.hong.PostService_MCP_Server.dto.user.SignUpRequest;
+import com.hong.PostService_MCP_Server.dto.user.SignUpWithEmailRequest;
 
 import lombok.RequiredArgsConstructor;
 
@@ -38,15 +39,38 @@ public class UserService {
                 .build();
     }
 
-    @Tool(description = "일반 회원가입을 진행한다. username, password, email, nickname은 필수이다.")
-    public URI signUp(
+    @Tool(description = "username, password, nickname을 받아 일반 회원가입을 진행한다.")
+    public URI signUpWithoutEmail(
              String username,
-             String password, 
-           String email,
+             String password,
            String nickname
     ) {
 
-        SignUpRequest signUpRequest = new SignUpRequest(username, password, email, nickname);
+        SignUpWithoutEmailRequest signUpRequest = new SignUpWithoutEmailRequest(username, password, nickname);
+
+        try {
+            ResponseEntity<Void> response = restClient
+                    .post()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(signUpRequest)
+                    .retrieve()
+                    .toBodilessEntity();
+
+            return response.getHeaders().getLocation();
+        } catch (RestClientException e) {
+            throw new RuntimeException("회원 가입 실패: " + e.getMessage(), e);
+        }
+    }
+
+    @Tool(description = "일반 회원가입을 진행한다. username, password, email, nickname은 필수이다.")
+    public URI signUpWithEmail(
+            String username,
+            String password,
+            String email,
+            String nickname
+    ) {
+
+        SignUpWithEmailRequest signUpRequest = new SignUpWithEmailRequest(username, password, email, nickname);
 
         try {
             ResponseEntity<Void> response = restClient
@@ -70,14 +94,14 @@ public class UserService {
            String nickname
     ) {
 
-        SignUpRequest signUpRequest = new SignUpRequest(username, password, email, nickname);
+        SignUpWithEmailRequest signUpWithEmailRequest = new SignUpWithEmailRequest(username, password, email, nickname);
 
         try {
             ResponseEntity<Void> response = restClient
                     .post()
                     .uri("/admin")
                     .contentType(MediaType.APPLICATION_JSON)
-                    .body(signUpRequest)
+                    .body(signUpWithEmailRequest)
                     .retrieve()
                     .toBodilessEntity();
 
@@ -201,6 +225,20 @@ public class UserService {
                     .toBodilessEntity();
         } catch (RestClientException e) {
             throw new RuntimeException("회원 비밀번호 수정 실패: " + e.getMessage(), e);
+        }
+    }
+
+    @Tool(description = "로그인한 회원을 탈퇴한다.")
+    public void signOut(String authorization) {
+        try {
+            restClient
+                    .delete()
+                    .uri("/me")
+                    .header("Authorization", authorization)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (RestClientException e) {
+            throw new RuntimeException("회원 탈퇴 실패: " + e.getMessage(), e);
         }
     }
 }
