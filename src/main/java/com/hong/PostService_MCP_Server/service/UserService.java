@@ -260,7 +260,7 @@ public class UserService {
     }
 
     @Tool(description = "로그인한 회원으로 게시글을 작성한다.")
-    public void writePost(
+    public URI writePost(
             String authorization,
             String title,
             String content
@@ -268,13 +268,15 @@ public class UserService {
         PostCreateRequest request = new PostCreateRequest(title, content);
 
         try {
-            restClient
+            ResponseEntity<Void> response = restClient
                     .post()
                     .uri("/me/posts")
                     .header("Authorization", authorization)
                     .body(request)
                     .retrieve()
                     .toBodilessEntity();
+
+            return response.getHeaders().getLocation();
 
         } catch (RestClientException e) {
             throw new RuntimeException("게시글 작성 실패: " + e.getMessage(), e);
