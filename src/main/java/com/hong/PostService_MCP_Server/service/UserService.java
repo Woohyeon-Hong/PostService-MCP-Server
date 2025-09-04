@@ -38,9 +38,9 @@ public class UserService {
 
     @Tool(description = "username, password, nickname을 받아 일반 회원가입을 진행한다.")
     public URI signUpWithoutEmail(
-             String username,
-             String password,
-           String nickname
+             @ToolParam(description = "가입할 사용자의 username (3-20자 사이, 기존 회원과 중복 불가)") String username,
+             @ToolParam(description = "가입할 사용자의 비밀번호 (6자 이상, 기존 회원과 중복 불가)") String password,
+             @ToolParam(description = "가입할 사용자의 닉네임 (빈 문자열 금지, 기존 회원과 중복 불가)") String nickname
     ) {
 
         SignUpRequest signUpRequest = new SignUpRequest(username, password,null, nickname);
@@ -60,10 +60,10 @@ public class UserService {
 
     @Tool(description = "username, password, email, nickname을 받아 일반 회원가입을 진행한다.")
     public URI signUpWithEmail(
-            String username,
-            String password,
-            String email,
-            String nickname
+            @ToolParam(description = "가입할 사용자의 username (3-20자 사이, 기존 회원과 중복 불가)") String username,
+            @ToolParam(description = "가입할 사용자의 비밀번호 (6자 이상, 기존 회원과 중복 불가)") String password,
+            @ToolParam(description = "가입할 사용자의 이메일 주소 (이메일 주소 형식이여야 함, 기존 회원과 중복 불가)") String email,
+            @ToolParam(description = "가입할 사용자의 닉네임 (빈 문자열 금지, 기존 회원과 중복 불가)") String nickname
     ) {
 
         SignUpRequest signUpRequest = new SignUpRequest(username, password, email, nickname);
@@ -83,9 +83,9 @@ public class UserService {
 
     @Tool(description = "username, password, nickname을 받아 어드민 회원 가입을 진행 한다.")
     public URI signUpAdminWithoutEmail(
-            String username,
-            String password,
-            String nickname
+            @ToolParam(description = "가입할 사용자의 username (3-20자 사이, 기존 회원과 중복 불가)") String username,
+            @ToolParam(description = "가입할 사용자의 비밀번호 (6자 이상, 기존 회원과 중복 불가)") String password,
+            @ToolParam(description = "가입할 사용자의 닉네임 (빈 문자열 금지, 기존 회원과 중복 불가)") String nickname
     ) {
 
         SignUpRequest signUpRequest = new SignUpRequest(username, password, null, nickname);
@@ -106,10 +106,10 @@ public class UserService {
 
     @Tool(description = "username, password, email, nickname을 받아 어드민 회원 가입을 진행 한다.")
     public URI signUpAdminWithEmail(
-             String username,
-             String password, 
-           String email,
-           String nickname
+            @ToolParam(description = "가입할 사용자의 username (3-20자 사이, 기존 회원과 중복 불가)") String username,
+            @ToolParam(description = "가입할 사용자의 비밀번호 (6자 이상, 기존 회원과 중복 불가)") String password,
+            @ToolParam(description = "가입할 사용자의 이메일 주소 (이메일 주소 형식이어야 함, 기존 회원과 중복 불가)") String email,
+            @ToolParam(description = "가입할 사용자의 닉네임 (빈 문자열 금지, 기존 회원과 중복 불가)") String nickname
     ) {
 
         SignUpRequest signUpRequest = new SignUpRequest(username, password, email, nickname);
@@ -183,7 +183,7 @@ public class UserService {
 
     @Tool(description = "로그인한 회원의 username을 수정한다.  단, 기존 다른 회원과 중복 불가")
     public void updateUsername(String authorization,
-                                 @ToolParam(description = "변경할 사용자 이름 (3~20자 사이)") String username) {
+                                 @ToolParam(description = "변경할 사용자 이름 (3-20자 사이, 기존 회원과 중복 불가)") String username) {
 
         Map<String, String> updateRequest = new HashMap<>();
         updateRequest.put("username", username);
@@ -193,7 +193,7 @@ public class UserService {
 
     @Tool(description = "로그인한 회원의 email을 수정한다. 단, 기존 다른 회원과 중복 불가")
     public void updateEmail(String authorization,
-                                 @ToolParam(description = "변경할 email 주소") String email) {
+                                 @ToolParam(description = "변경할 email 주소 (이메일 주소 형식이어야 함, 기존 회원과 중복 불가)") String email) {
 
         Map<String, String> updateRequest = new HashMap<>();
         updateRequest.put("email", email);
@@ -203,7 +203,7 @@ public class UserService {
 
     @Tool(description = "로그인한 회원의 nickname을 수정한다. 단, 기존 다른 회원과 중복 불가")
     public void updateNickname(String authorization,
-                                 @ToolParam(description = "변경할 닉네임") String nickname) {
+                                 @ToolParam(description = "변경할 닉네임 (빈 문자열 금지, 기존 회원과 중복 불가)") String nickname) {
 
         Map<String, String> updateRequest = new HashMap<>();
         updateRequest.put("nickname", nickname);
@@ -228,7 +228,7 @@ public class UserService {
     @Tool(description = "로그인한 회원의 비밀번호를 수정한다.")
     public void updatePassword(String authorization,
                                @ToolParam(description = "기존 비밀번호") String currentPassword,
-                               @ToolParam(description = "변경할 비밀번호") String newPassword) {
+                               @ToolParam(description = "변경할 비밀번호 (6자 이상)") String newPassword) {
 
         PasswordUpdateRequest request = new PasswordUpdateRequest(currentPassword, newPassword);
 
@@ -274,7 +274,7 @@ public class UserService {
                     .header("Authorization", authorization)
                     .body(request)
                     .retrieve()
-                    .body(PostDetailResponse.class);
+                    .toBodilessEntity();
 
         } catch (RestClientException e) {
             throw new RuntimeException("게시글 작성 실패: " + e.getMessage(), e);
