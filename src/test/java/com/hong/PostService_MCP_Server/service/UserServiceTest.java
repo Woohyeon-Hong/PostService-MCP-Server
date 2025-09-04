@@ -1,7 +1,6 @@
 package com.hong.PostService_MCP_Server.service;
 
 import com.hong.PostService_MCP_Server.dto.post.Page;
-import com.hong.PostService_MCP_Server.dto.post.PostDetailResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -62,6 +61,4 @@ class UserServiceTest {
         assertThat(post.writerNickname()).isEqualTo(nickname);
         assertThat(post.createdDate()).isNotNull();
     }
-
-
 }
