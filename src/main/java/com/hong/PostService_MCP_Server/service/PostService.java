@@ -2,6 +2,7 @@ package com.hong.PostService_MCP_Server.service;
 
 import com.hong.PostService_MCP_Server.dto.post.Page;
 import com.hong.PostService_MCP_Server.dto.post.Page.PostSummaryResponse;
+import com.hong.PostService_MCP_Server.dto.post.PostDetailResponse;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.core.ParameterizedTypeReference;
@@ -44,6 +45,19 @@ public class PostService {
             return response.content();
         } catch (RestClientException e) {
             throw new RuntimeException("전체 게시글 목록 조회: " + e.getMessage(), e);
+        }
+    }
+
+    @Tool(description = "게시글의 id를 받아, 해당 게시글을 상세히 조회한다.")
+    public PostDetailResponse getPost(Long postId) {
+        try {
+            return restClient
+                    .get()
+                    .uri("/{postId}", postId)
+                    .retrieve()
+                    .body(PostDetailResponse.class);
+        } catch (RestClientException e) {
+            throw new RuntimeException("게시글 상세 조회 실패: " + e.getMessage(), e);
         }
     }
 }
