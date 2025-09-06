@@ -60,4 +60,72 @@ public class PostService {
             throw new RuntimeException("게시글 상세 조회 실패: " + e.getMessage(), e);
         }
     }
+
+    @Tool(description = "사용자 닉네임과 게시글 제목을 입력 받아, 검색한 닉네임 문자열이 닉네임에 포함된 사용자가 작성했거나 검색한 제목 문자열을 포함하는 제목을 가지는 게시글 목록을 검색한다.")
+    public List<PostSummaryResponse> searchPostsWithWriterAndTitle(
+            @ToolParam(description = "게시글 작성자의 닉네임") String writer,
+            @ToolParam(description = "게시글 제목") String title
+    ) {
+        try {
+            Page<PostSummaryResponse> response = restClient
+                    .get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/search")
+                            .queryParam("writer", writer)
+                            .queryParam("title", title)
+                            .build()
+                    )
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<Page<PostSummaryResponse>>() {
+                    });
+
+            return response.content();
+        } catch (RestClientException e) {
+            throw new RuntimeException("게시글 검색 실패: " + e.getMessage(), e);
+        }
+    }
+
+    @Tool(description = "게시글 제목을 입력 받아, 검색한 제목 문자열을 포함하는 제목을 가지는 게시글 목록을 검색한다.")
+    public List<PostSummaryResponse> searchPostsWithTitle(
+            @ToolParam(description = "게시글 제목") String title
+    ) {
+        try {
+            Page<PostSummaryResponse> response = restClient
+                    .get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/search")
+                            .queryParam("title", title)
+                            .build()
+                    )
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<Page<PostSummaryResponse>>() {
+                    });
+
+            return response.content();
+        } catch (RestClientException e) {
+            throw new RuntimeException("게시글 검색 실패: " + e.getMessage(), e);
+        }
+    }
+
+    @Tool(description = "사용자 닉네임을 입력 받아, 검색한 닉네임 문자열이 닉네임에 포함된 사용자가 작성한 게시글 목록을 검색한다.")
+    public List<PostSummaryResponse> searchPostsWithWriter(
+            @ToolParam(description = "게시글 작성자의 닉네임") String writer
+    ) {
+        try {
+            Page<PostSummaryResponse> response = restClient
+                    .get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/search")
+                            .queryParam("writer", writer)
+                            .build()
+                    )
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<Page<PostSummaryResponse>>() {
+                    });
+
+            return response.content();
+        } catch (RestClientException e) {
+            throw new RuntimeException("게시글 검색 실패: " + e.getMessage(), e);
+        }
+    }
 }

@@ -1,6 +1,7 @@
 package com.hong.PostService_MCP_Server.service;
 
 import com.hong.PostService_MCP_Server.dto.post.Page;
+import com.hong.PostService_MCP_Server.dto.post.Page.PostSummaryResponse;
 import com.hong.PostService_MCP_Server.dto.post.PostDetailResponse;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,7 +42,7 @@ class PostServiceTest {
     @Test
     void getAllPosts() {
         //given
-        List<Page.PostSummaryResponse> original = postService.getAllPosts(0, 1000);
+        List<PostSummaryResponse> original = postService.getAllPosts(0, 1000);
 
         long num = Math.round(Math.random() * 1000);
 
@@ -57,7 +58,7 @@ class PostServiceTest {
         userService.writePost(authorization, title, content);
 
         //when
-        List<Page.PostSummaryResponse> changed = postService.getAllPosts(0, 1000);
+        List<PostSummaryResponse> changed = postService.getAllPosts(0, 1000);
 
         //then
         assertThat(original.size() + 1).isEqualTo(changed.size());
@@ -89,4 +90,77 @@ class PostServiceTest {
         assertThat(post.title()).isEqualTo(title);
         assertThat(post.content()).isEqualTo(content);
     }
+
+    @Test
+    void searchPostsWithWriterAndTitle() {
+        //given
+        long num = Math.round(Math.random() * 1000);
+
+        String username = "testUser" + num;
+        String password = "testPassword" +num;
+        String nickname = "testNickname" + num;
+
+        userService.signUpWithoutEmail(username, password, nickname);
+        String authorization = userService.login(username, password);
+
+        for (int i = 1; i <= 5; i++) {
+            userService.writePost(authorization, nickname + "'s " + "title" + i, nickname + "'s " + "content" + i);
+        }
+
+        //when
+        List<PostSummaryResponse> responses = postService.searchPostsWithWriterAndTitle(nickname, nickname);
+
+        //then
+        assertThat(responses.size()).isEqualTo(5);
+        assertThat(responses.get(0).writerNickname()).isEqualTo(nickname);
+    }
+
+    @Test
+    void searchPostsWithWriter() {
+        //given
+        long num = Math.round(Math.random() * 1000);
+
+        String username = "testUser" + num;
+        String password = "testPassword" +num;
+        String nickname = "testNickname" + num;
+
+        userService.signUpWithoutEmail(username, password, nickname);
+        String authorization = userService.login(username, password);
+
+        for (int i = 1; i <= 5; i++) {
+            userService.writePost(authorization, nickname + "'s " + "title" + i, nickname + "'s " + "content" + i);
+        }
+
+        //when
+        List<PostSummaryResponse> responses = postService.searchPostsWithWriter(nickname);
+
+        //then
+        assertThat(responses.size()).isEqualTo(5);
+        assertThat(responses.get(0).writerNickname()).isEqualTo(nickname);
+    }
+
+    @Test
+    void searchPostsWithTitle() {
+        //given
+        long num = Math.round(Math.random() * 1000);
+
+        String username = "testUser" + num;
+        String password = "testPassword" +num;
+        String nickname = "testNickname" + num;
+
+        userService.signUpWithoutEmail(username, password, nickname);
+        String authorization = userService.login(username, password);
+
+        for (int i = 1; i <= 5; i++) {
+            userService.writePost(authorization, nickname + "'s " + "title" + i, nickname + "'s " + "content" + i);
+        }
+
+        //when
+        List<PostSummaryResponse> responses = postService.searchPostsWithTitle(nickname + "'s title");
+
+        //then
+        assertThat(responses.size()).isEqualTo(5);
+        assertThat(responses.get(0).writerNickname()).isEqualTo(nickname);
+    }
+
 }
