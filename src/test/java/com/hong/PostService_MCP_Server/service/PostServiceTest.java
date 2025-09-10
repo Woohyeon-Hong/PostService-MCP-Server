@@ -163,4 +163,92 @@ class PostServiceTest {
         assertThat(responses.get(0).writerNickname()).isEqualTo(nickname);
     }
 
+    @Test
+    void updatePostWithTitleAndContent() {
+        //given
+        long num = Math.round(Math.random() * 1000);
+
+        String username = "testUser" + num;
+        String password = "testPassword" +num;
+        String nickname = "testNickname" + num;
+
+        userService.signUpWithoutEmail(username, password, nickname);
+        String authorization = userService.login(username, password);
+
+        String title = nickname + "'s title";
+        String content = nickname + "'s content";
+        String path = userService.writePost(authorization, title, content).getPath();
+
+        String[] blocks = path.split("/");
+        Long postId = Long.parseLong(blocks[blocks.length - 1]);
+
+        String nextTitle = nickname + "'s new title";
+        String nextContent = nickname + "'s new content";
+
+        //when
+        postService.updatePostWithTitleAndContent(authorization, postId, nextTitle, nextContent);
+
+        //then
+        PostDetailResponse post = postService.getPost(postId);
+        assertThat(post.title()).isEqualTo(nextTitle);
+        assertThat(post.content()).isEqualTo(nextContent);
+    }
+
+    @Test
+    void updatePostWithTitle() {
+        //given
+        long num = Math.round(Math.random() * 1000);
+
+        String username = "testUser" + num;
+        String password = "testPassword" +num;
+        String nickname = "testNickname" + num;
+
+        userService.signUpWithoutEmail(username, password, nickname);
+        String authorization = userService.login(username, password);
+
+        String title = nickname + "'s title";
+        String content = nickname + "'s content";
+        String path = userService.writePost(authorization, title, content).getPath();
+
+        String[] blocks = path.split("/");
+        Long postId = Long.parseLong(blocks[blocks.length - 1]);
+
+        String nextTitle = nickname + "'s new title";
+
+        //when
+        postService.updatePostWithTitle(authorization, postId, nextTitle);
+
+        //then
+        PostDetailResponse post = postService.getPost(postId);
+        assertThat(post.title()).isEqualTo(nextTitle);
+    }
+
+    @Test
+    void updatePostWithContent() {
+        //given
+        long num = Math.round(Math.random() * 1000);
+
+        String username = "testUser" + num;
+        String password = "testPassword" +num;
+        String nickname = "testNickname" + num;
+
+        userService.signUpWithoutEmail(username, password, nickname);
+        String authorization = userService.login(username, password);
+
+        String title = nickname + "'s title";
+        String content = nickname + "'s content";
+        String path = userService.writePost(authorization, title, content).getPath();
+
+        String[] blocks = path.split("/");
+        Long postId = Long.parseLong(blocks[blocks.length - 1]);
+
+        String nextContent = nickname + "'s new content";
+
+        //when
+        postService.updatePostWithContent(authorization, postId, nextContent);
+
+        //then
+        PostDetailResponse post = postService.getPost(postId);
+        assertThat(post.content()).isEqualTo(nextContent);
+    }
 }

@@ -3,6 +3,7 @@ package com.hong.PostService_MCP_Server.service;
 import com.hong.PostService_MCP_Server.dto.post.Page;
 import com.hong.PostService_MCP_Server.dto.post.Page.PostSummaryResponse;
 import com.hong.PostService_MCP_Server.dto.post.PostDetailResponse;
+import com.hong.PostService_MCP_Server.dto.post.PostUpdateRequest;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.core.ParameterizedTypeReference;
@@ -126,6 +127,71 @@ public class PostService {
             return response.content();
         } catch (RestClientException e) {
             throw new RuntimeException("게시글 검색 실패: " + e.getMessage(), e);
+        }
+    }
+
+    @Tool(description = "로그인한 회원으로 변경하고자 하는 게시글의 id, 변경하려는 제목 그리고 변경하려는 본문을 받아 게시글을 수정한다.")
+    public void updatePostWithTitleAndContent(
+            String authorization,
+            @ToolParam(description = "수정할 게시글 id") Long postId,
+            @ToolParam(description = "변경하고자 하는 제목") String title,
+            @ToolParam(description = "변경하고자 하는 본문") String content) {
+
+        PostUpdateRequest request = new PostUpdateRequest(title, content);
+
+        try {
+            restClient
+                    .patch()
+                    .uri("/{postId}", postId)
+                    .header("Authorization", authorization)
+                    .body(request)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (RestClientException e) {
+            throw new RuntimeException("게시글 수정 실패: " + e.getMessage(), e);
+        }
+    }
+
+    @Tool(description = "로그인한 회원으로 변경하고자 하는 게시글의 id, 변경하려는 제목 그리고 변경하려는 본문을 받아 게시글을 수정한다.")
+    public void updatePostWithTitle(
+            String authorization,
+            @ToolParam(description = "수정할 게시글 id") Long postId,
+            @ToolParam(description = "변경하고자 하는 제목") String title
+    ) {
+
+        PostUpdateRequest request = new PostUpdateRequest(title, null);
+
+        try {
+            restClient
+                    .patch()
+                    .uri("/{postId}", postId)
+                    .header("Authorization", authorization)
+                    .body(request)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (RestClientException e) {
+            throw new RuntimeException("게시글 수정 실패: " + e.getMessage(), e);
+        }
+    }
+
+    @Tool(description = "로그인한 회원으로 변경하고자 하는 게시글의 id, 변경하려는 제목 그리고 변경하려는 본문을 받아 게시글을 수정한다.")
+    public void updatePostWithContent(
+            String authorization,
+            @ToolParam(description = "수정할 게시글 id") Long postId,
+            @ToolParam(description = "변경하고자 하는 본문") String content) {
+
+        PostUpdateRequest request = new PostUpdateRequest(null, content);
+
+        try {
+            restClient
+                    .patch()
+                    .uri("/{postId}", postId)
+                    .header("Authorization", authorization)
+                    .body(request)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (RestClientException e) {
+            throw new RuntimeException("게시글 수정 실패: " + e.getMessage(), e);
         }
     }
 }
