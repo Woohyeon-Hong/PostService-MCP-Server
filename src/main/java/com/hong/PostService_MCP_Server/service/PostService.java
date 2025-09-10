@@ -1,5 +1,6 @@
 package com.hong.PostService_MCP_Server.service;
 
+import com.hong.PostService_MCP_Server.dto.comment.CommentPage;
 import com.hong.PostService_MCP_Server.dto.post.Page;
 import com.hong.PostService_MCP_Server.dto.post.Page.PostSummaryResponse;
 import com.hong.PostService_MCP_Server.dto.post.PostDetailResponse;
@@ -16,6 +17,8 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.hong.PostService_MCP_Server.dto.comment.CommentPage.*;
 
 @Service
 public class PostService {
@@ -239,6 +242,24 @@ public class PostService {
             return response.getHeaders().getLocation();
         }  catch (RestClientException e) {
             throw new RuntimeException("댓글 작성 실패: " + e.getMessage(), e);
+        }
+    }
+
+    @Tool(description = "댓글 목록을 조회할 게시글 id를 받아, 해당 게시글에 달린 댓글 목록을 조회한다.")
+    public List<CommentResponse> getCommentsOfPost(
+            @ToolParam(description = "댓글 목록을 조회할 게시글 id") Long postId
+    ) {
+        try {
+            CommentPage<CommentResponse> responsePage = restClient
+                    .get()
+                    .uri("/{postId}/comments", postId)
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<CommentPage<CommentResponse>>() {
+                    });
+
+            return responsePage.content();
+        }  catch (RestClientException e) {
+            throw new RuntimeException("댓글 목록 조회 실패: " + e.getMessage(), e);
         }
     }
 }
