@@ -7,11 +7,15 @@ import com.hong.PostService_MCP_Server.dto.post.PostUpdateRequest;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
+import java.net.URI;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class PostService {
@@ -195,7 +199,7 @@ public class PostService {
         }
     }
 
-    @Tool(description = "로그인한 회원으로 넙겨받은 id의 게시글을 삭제한다. 삭제는 소프트 삭제 방식으로 이뤄지며, 게시글 삭제 시, 연관관계가 있는 다른 엔티티들도 소프트 삭제된다.")
+    @Tool(description = "로그인한 회원으로 넙겨받은 id의 게시글을 삭제한다. 삭제는 소프트 삭제 방식으로 이뤄지며, 게시글 삭제 시, 게시글에 딸린 댓글과 파일들도 소프트 삭제된다.")
     public void deletePost(
             String authorization,
             @ToolParam(description = "삭제할 게시글 id") Long postId
@@ -210,6 +214,31 @@ public class PostService {
                     .toBodilessEntity();
         }  catch (RestClientException e) {
             throw new RuntimeException("게시글 삭제 실패: " + e.getMessage(), e);
+        }
+    }
+
+    @Tool(description = "댓글을 달 게시글의 id, 댓글을 달 내용을 받아, 로그인한 회원으로 게시글에 댓글을 작성한다.")
+    public URI writeComment(
+            String authorization,
+            @ToolParam(description = "댓글을 달 게시글 id") Long postId,
+            @ToolParam(description = "댓글을 달 내용") String content
+    ) {
+
+        Map<String, String> map = new HashMap<>();
+        map.put("content", content);
+
+        try {
+            ResponseEntity<Void> response = restClient
+                    .post()
+                    .uri("/{postId}/comments", postId)
+                    .header("Authorization", authorization)
+                    .body(map)
+                    .retrieve()
+                    .toBodilessEntity();
+
+            return response.getHeaders().getLocation();
+        }  catch (RestClientException e) {
+            throw new RuntimeException("댓글 작성 실패: " + e.getMessage(), e);
         }
     }
 }

@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.net.URI;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -277,5 +278,33 @@ class PostServiceTest {
 
         //then
         assertThatThrownBy(() -> postService.getPost(postId)).isInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    void writeComment() {
+        //given
+        long num = Math.round(Math.random() * 1000);
+
+        String username = "testUser" + num;
+        String password = "testPassword" +num;
+        String nickname = "testNickname" + num;
+
+        userService.signUpWithoutEmail(username, password, nickname);
+        String authorization = userService.login(username, password);
+
+        String title = nickname + "'s title";
+        String content = nickname + "'s content";
+        String path = userService.writePost(authorization, title, content).getPath();
+
+        String[] blocks = path.split("/");
+        Long postId = Long.parseLong(blocks[blocks.length - 1]);
+
+        String commentContent = "comment_test";
+
+        //when
+        URI uri = postService.writeComment(authorization, postId, commentContent);
+
+        //then
+        assertThat(uri.getPath().toString()).startsWith("/v2/comments/");
     }
 }
