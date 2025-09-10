@@ -12,6 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 
 @SpringBootTest
@@ -250,5 +251,31 @@ class PostServiceTest {
         //then
         PostDetailResponse post = postService.getPost(postId);
         assertThat(post.content()).isEqualTo(nextContent);
+    }
+
+    @Test
+    void deletePost() {
+        //given
+        long num = Math.round(Math.random() * 1000);
+
+        String username = "testUser" + num;
+        String password = "testPassword" +num;
+        String nickname = "testNickname" + num;
+
+        userService.signUpWithoutEmail(username, password, nickname);
+        String authorization = userService.login(username, password);
+
+        String title = nickname + "'s title";
+        String content = nickname + "'s content";
+        String path = userService.writePost(authorization, title, content).getPath();
+
+        String[] blocks = path.split("/");
+        Long postId = Long.parseLong(blocks[blocks.length - 1]);
+
+        //when
+        postService.deletePost(authorization, postId);
+
+        //then
+        assertThatThrownBy(() -> postService.getPost(postId)).isInstanceOf(RuntimeException.class);
     }
 }

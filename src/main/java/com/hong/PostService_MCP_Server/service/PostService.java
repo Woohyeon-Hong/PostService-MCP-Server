@@ -194,4 +194,22 @@ public class PostService {
             throw new RuntimeException("게시글 수정 실패: " + e.getMessage(), e);
         }
     }
+
+    @Tool(description = "로그인한 회원으로 넙겨받은 id의 게시글을 삭제한다. 삭제는 소프트 삭제 방식으로 이뤄지며, 게시글 삭제 시, 연관관계가 있는 다른 엔티티들도 소프트 삭제된다.")
+    public void deletePost(
+            String authorization,
+            @ToolParam(description = "삭제할 게시글 id") Long postId
+    ) {
+
+        try {
+            restClient
+                    .delete()
+                    .uri("/{postId}", postId)
+                    .header("Authorization", authorization)
+                    .retrieve()
+                    .toBodilessEntity();
+        }  catch (RestClientException e) {
+            throw new RuntimeException("게시글 삭제 실패: " + e.getMessage(), e);
+        }
+    }
 }
