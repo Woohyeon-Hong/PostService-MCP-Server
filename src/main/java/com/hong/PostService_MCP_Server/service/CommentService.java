@@ -9,6 +9,8 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
 import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class CommentService {
@@ -47,6 +49,28 @@ public class CommentService {
             return response.getHeaders().getLocation();
         } catch (RestClientException e) {
             throw new RuntimeException("대댓글 작성 실패: " + e.getMessage(), e);
+        }
+    }
+
+    @Tool(description = "수정할 댓글이나 대댓글 id와 변경하고싶은 내용을 받아, 댓글을 수정한다.")
+    public void updateComment(
+            String authorization,
+            @ToolParam(description = "수정할 댓글이나 대댓글 id") Long commentId,
+            @ToolParam(description = "변경하고자 하는 내용") String content
+    ) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("content", content);
+
+        try {
+            restClient
+                    .patch()
+                    .uri("/{commentId}", commentId)
+                    .header("Authorization", authorization)
+                    .body(map)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (RestClientException e) {
+            throw new RuntimeException("댓글 수정 실패: " + e.getMessage(), e);
         }
     }
 }
