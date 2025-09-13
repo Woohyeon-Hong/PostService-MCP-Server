@@ -20,7 +20,8 @@ public record Page<T>( @JsonProperty("content") List<PostSummaryResponse> conten
             @JsonProperty("title") String title,
             @JsonProperty("writerNickname") String writerNickname,
             @JsonProperty("createdDate") LocalDateTime createdDate,
-            @JsonProperty("commentCount") int commentCount
+            @JsonProperty("commentCount") int commentCount,
+            @JsonProperty("includingFile") boolean includingFile
     ) {
     }
 }
