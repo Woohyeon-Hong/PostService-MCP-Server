@@ -73,4 +73,21 @@ public class CommentService {
             throw new RuntimeException("댓글 수정 실패: " + e.getMessage(), e);
         }
     }
+
+    @Tool(description = "삭제할 댓글이나 대댓글 id를 받아, 댓글을 삭제한다.")
+    public void deleteComment(
+            String authorization,
+            @ToolParam(description = "삭제할 댓글이나 대댓글 id") Long commentId
+    ) {
+        try {
+            restClient
+                    .delete()
+                    .uri("/{commentId}", commentId)
+                    .header("Authorization", authorization)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (RestClientException e) {
+            throw new RuntimeException("댓글 삭제 실패: " + e.getMessage(), e);
+        }
+    }
 }
