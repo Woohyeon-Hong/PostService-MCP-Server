@@ -1,5 +1,6 @@
 package com.hong.PostService_MCP_Server.service;
 
+import com.hong.PostService_MCP_Server.dto.file.DownloadUrlResponse;
 import com.hong.PostService_MCP_Server.dto.file.UploadUrlResponses;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
@@ -47,6 +48,26 @@ public class FileService {
             return responses;
         } catch (RestClientException e) {
             throw new RuntimeException("업로드 url 발급 실패: " + e.getMessage(), e);
+        }
+    }
+
+    @Tool(description = "다운 받을 파일의 id를 받아, 해당 파일의 다운로드 용 presignedUrl을 발급한다.")
+    public DownloadUrlResponse getDownloadPresignedUrl(
+            String authorization,
+            @ToolParam(description = "첨부된 파일들을 다운받을 게시글 id") Long fileId
+    ) {
+
+        try {
+            DownloadUrlResponse response = restClient
+                    .post()
+                    .uri("/{fileId}/download-urls", fileId)
+                    .header("Authorization", authorization)
+                    .retrieve()
+                    .body(DownloadUrlResponse.class);
+
+            return response;
+        } catch (RestClientException e) {
+            throw new RuntimeException("다운로드 url 발급 실패: " + e.getMessage(), e);
         }
     }
 }
