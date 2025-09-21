@@ -90,14 +90,12 @@ class FileServiceTest {
 
         PostDetailResponse post = postService.getPost(postId);
 
-        System.out.println(post);
-
         Long fileId = post.files().get(0).id();
 
         //when
         File downloadFile = fileService.downloadFile(authorization, fileId);
 
         //then
-        System.out.println("name : " + downloadFile.getName());
+        System.out.println(downloadFile.getAbsoluteFile());
     }
 }
