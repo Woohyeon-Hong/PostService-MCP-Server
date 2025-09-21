@@ -1,18 +1,11 @@
 package com.hong.PostService_MCP_Server.service;
 
-import com.hong.PostService_MCP_Server.dto.comment.CommentPage;
-import com.hong.PostService_MCP_Server.dto.file.AddAttachmentRequest;
 import com.hong.PostService_MCP_Server.dto.file.FileInfo;
-import com.hong.PostService_MCP_Server.dto.post.Page;
-import com.hong.PostService_MCP_Server.dto.post.Page.PostSummaryResponse;
 import com.hong.PostService_MCP_Server.dto.post.PostDetailResponse;
-import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -257,6 +250,36 @@ class PostServiceTest {
 //        PostDetailResponse post = postService.getPost(postId);
 //        assertThat(post.content()).isEqualTo(nextContent);
 //    }
+
+    @Test
+    void addAttachments() {
+        //given
+        long num = Math.round(Math.random() * 1000);
+
+        String username = "testUser" + num;
+        String password = "testPassword" +num;
+        String nickname = "testNickname" + num;
+
+        userService.signUpWithoutEmail(username, password, nickname);
+        String authorization = userService.login(username, password);
+
+        String title = nickname + "'s title";
+        String content = nickname + "'s content";
+        String path = userService.writePost(authorization, title, content, null).getPath();
+
+        String[] blocks = path.split("/");
+        Long postId = Long.parseLong(blocks[blocks.length - 1]);
+
+        List<FileInfo> fileInfoList = new ArrayList<FileInfo>();
+        fileInfoList.add(new FileInfo("/Users/hong-uhyeon/Desktop/STUDY/Develop/PostService-MCP-Server/src/test/java/com/hong/PostService_MCP_Server/service/screen.png"));
+
+        //when
+        postService.addAttachments(authorization, postId, fileInfoList);
+
+        //then
+        List<PostDetailResponse.FileResponse> files = postService.getPost(postId).files();
+        assertThat(files).isNotEmpty();
+    }
 
     @Test
     void removeAttachments() {

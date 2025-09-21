@@ -1,12 +1,16 @@
 package com.hong.PostService_MCP_Server.service;
 
 import com.hong.PostService_MCP_Server.dto.comment.CommentPage;
+import com.hong.PostService_MCP_Server.dto.file.FileInfo;
 import com.hong.PostService_MCP_Server.dto.post.Page;
 import com.hong.PostService_MCP_Server.dto.post.Page.PostSummaryResponse;
+import com.hong.PostService_MCP_Server.dto.post.PostCreateRequest;
+import com.hong.PostService_MCP_Server.dto.post.PostCreateRequest.FileCreateRequest;
 import com.hong.PostService_MCP_Server.dto.post.PostDetailResponse;
 import com.hong.PostService_MCP_Server.dto.post.PostUpdateRequest;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -24,15 +28,19 @@ import static com.hong.PostService_MCP_Server.dto.comment.CommentPage.*;
 public class PostService {
 
     private final RestClient restClient;
+    private final UserService userService;
     private final static String SERVICE_URL = "http://localhost:8080/v2/posts";
 
-    public PostService() {
+    @Autowired
+    public PostService(UserService userService) {
         this.restClient = RestClient.builder()
                 .baseUrl(SERVICE_URL)
                 .defaultHeader("Origin", "http://localhost:8080")
                 .defaultHeader("Content-Type", "application/json")
                 .defaultHeader("Accept", "application/json")
                 .build();
+
+        this.userService = userService;
     }
 
     @Tool(description = "전체 게시글 목록을 조회한다.")
@@ -204,6 +212,31 @@ public class PostService {
         }
     }
 
+    @Tool(description = "새로 파일을 첨부할 게시글의 아이디와 첨부할 파일들의 FileInfoList를 받아, 로그인한 회원으로 해당 게시글에 dto의 파일들을 첨부한다.")
+    public void addAttachments(
+            String authorization,
+            @ToolParam(description = "파일을 추가할 게시글 id") Long postId,
+            @ToolParam(description = "추가하고자 하는 파일들의 dto 리스트")  List<FileInfo> fileInfoList) {
+
+        List<FileCreateRequest> fileCreateRequests = (fileInfoList != null && !fileInfoList.isEmpty())
+                ?  userService.assignFileCrateRequests(authorization, fileInfoList) : null;
+
+        Map<String, List<FileCreateRequest>> map = new HashMap<>();
+        map.put("addFiles", fileCreateRequests);
+
+        try {
+            ResponseEntity<Void> response = restClient
+                    .patch()
+                    .uri("/{postId}", postId)
+                    .header("Authorization", authorization)
+                    .body(map)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (RestClientException e) {
+            throw new RuntimeException("새로운 파일 첨부 실패: " + e.getMessage(), e);
+        }
+    }
+
     @Tool(description = "삭제할 파일이 첨부된 게시글의 아이디와 파일의 아이디를 받아, 로그인한 회원으로 해당 파일을 게시글에서 삭제한다.")
     public void removeAttachments(
             String authorization,
@@ -221,7 +254,7 @@ public class PostService {
                     .retrieve()
                     .toBodilessEntity();
         } catch (RestClientException e) {
-            throw new RuntimeException("파일 삭제 실패: " + e.getMessage(), e);
+            throw new RuntimeException("파일 첨부 실패: " + e.getMessage(), e);
         }
     }
     @Tool(description = "로그인한 회원으로 넙겨받은 id의 게시글을 삭제한다. 삭제는 소프트 삭제 방식으로 이뤄지며, 게시글 삭제 시, 게시글에 딸린 댓글과 파일들도 소프트 삭제된다.")

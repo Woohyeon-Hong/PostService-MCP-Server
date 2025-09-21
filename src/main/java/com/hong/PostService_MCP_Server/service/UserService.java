@@ -280,7 +280,7 @@ public class UserService {
             @ToolParam(description = "첨부할 파일들의 목록") List<FileInfo> fileInfoList
     )  {
 
-        List<FileCreateRequest> fileCreateRequests =  (fileInfoList != null && !fileInfoList.isEmpty())
+        List<FileCreateRequest> fileCreateRequests = (fileInfoList != null && !fileInfoList.isEmpty())
                 ? assignFileCrateRequests(authorization, fileInfoList) : null;
 
         PostCreateRequest postCreateRequest = new PostCreateRequest(title, content, fileCreateRequests);
@@ -301,7 +301,7 @@ public class UserService {
         }
     }
 
-    private ArrayList<FileCreateRequest> assignFileCrateRequests(String authorization,
+    public ArrayList<FileCreateRequest> assignFileCrateRequests(String authorization,
                                                                  List<FileInfo> fileInfoList) {
 
         List<String> originalFileNames = new ArrayList<>();
