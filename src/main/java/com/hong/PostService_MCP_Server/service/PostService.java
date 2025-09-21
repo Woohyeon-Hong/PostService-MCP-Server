@@ -204,6 +204,26 @@ public class PostService {
         }
     }
 
+    @Tool(description = "삭제할 파일이 첨부된 게시글의 아이디와 파일의 아이디를 받아, 로그인한 회원으로 해당 파일을 게시글에서 삭제한다.")
+    public void removeAttachments(
+            String authorization,
+            @ToolParam(description = "파일을 삭제할 게시글 id") Long postId,
+            @ToolParam(description = "삭제하고자 하는 파일 id 목록")  List<Long> fileIds) {
+        Map<String, List<Long>> map = new HashMap<>();
+        map.put("removeFileIds", fileIds);
+
+        try {
+            restClient
+                    .patch()
+                    .uri("/{postId}", postId)
+                    .header("Authorization", authorization)
+                    .body(map)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (RestClientException e) {
+            throw new RuntimeException("파일 삭제 실패: " + e.getMessage(), e);
+        }
+    }
     @Tool(description = "로그인한 회원으로 넙겨받은 id의 게시글을 삭제한다. 삭제는 소프트 삭제 방식으로 이뤄지며, 게시글 삭제 시, 게시글에 딸린 댓글과 파일들도 소프트 삭제된다.")
     public void deletePost(
             String authorization,

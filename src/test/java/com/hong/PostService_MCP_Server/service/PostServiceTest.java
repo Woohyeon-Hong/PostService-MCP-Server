@@ -1,30 +1,33 @@
-//package com.hong.PostService_MCP_Server.service;
-//
-//import com.hong.PostService_MCP_Server.dto.comment.CommentPage;
-//import com.hong.PostService_MCP_Server.dto.post.Page;
-//import com.hong.PostService_MCP_Server.dto.post.Page.PostSummaryResponse;
-//import com.hong.PostService_MCP_Server.dto.post.PostDetailResponse;
-//import org.assertj.core.api.Assertions;
-//import org.junit.jupiter.api.BeforeEach;
-//import org.junit.jupiter.api.Test;
-//import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.boot.test.context.SpringBootTest;
-//
-//import java.net.URI;
-//import java.util.List;
-//
-//import static org.assertj.core.api.Assertions.assertThat;
-//import static org.assertj.core.api.Assertions.assertThatThrownBy;
-//
-//
-//@SpringBootTest
-//class PostServiceTest {
-//
-//    @Autowired
-//    PostService postService;
-//
-//    @Autowired
-//    UserService userService;
+package com.hong.PostService_MCP_Server.service;
+
+import com.hong.PostService_MCP_Server.dto.comment.CommentPage;
+import com.hong.PostService_MCP_Server.dto.file.AddAttachmentRequest;
+import com.hong.PostService_MCP_Server.dto.file.FileInfo;
+import com.hong.PostService_MCP_Server.dto.post.Page;
+import com.hong.PostService_MCP_Server.dto.post.Page.PostSummaryResponse;
+import com.hong.PostService_MCP_Server.dto.post.PostDetailResponse;
+import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+
+@SpringBootTest
+class PostServiceTest {
+
+    @Autowired
+    PostService postService;
+
+    @Autowired
+    UserService userService;
 //
 ////    @BeforeEach
 ////    void beforeEach() {
@@ -254,6 +257,44 @@
 //        PostDetailResponse post = postService.getPost(postId);
 //        assertThat(post.content()).isEqualTo(nextContent);
 //    }
+
+    @Test
+    void removeAttachments() {
+         //given
+         long num = Math.round(Math.random() * 1000);
+
+         String username = "testUser" + num;
+         String password = "testPassowrd" +num;
+         String nickname = "testNickname" + num;
+
+         userService.signUpWithoutEmail(username, password, nickname);
+         String authorization = userService.login(username, password);
+
+         String title = "title_test";
+         String content = "content_test";
+
+         ArrayList<String> originalFileNames = new ArrayList<>();
+         originalFileNames.add("screen.png");
+
+         ArrayList<FileInfo> fileInfoList = new ArrayList<>();
+         fileInfoList.add(new FileInfo("/Users/hong-uhyeon/Desktop/STUDY/Develop/PostService-MCP-Server/src/test/java/com/hong/PostService_MCP_Server/service/screen.png"));
+
+        String path = userService.writePost(authorization, title, content, fileInfoList).getPath();
+
+        String[] blocks = path.split("/");
+        Long postId = Long.parseLong(blocks[blocks.length - 1]);
+
+        Long fileId = postService.getPost(postId).files().get(0).id();
+        List<Long> fileIds = new ArrayList<>();
+        fileIds.add(fileId);
+
+        //when
+        postService.removeAttachments(authorization, postId, fileIds);
+
+         //then
+        assertThat(postService.getPost(postId).files()).isEmpty();
+
+            }
 //
 //    @Test
 //    void deletePost() {
@@ -337,4 +378,4 @@
 //        //then
 //        assertThat(responses.size()).isEqualTo(1);
 //    }
-//}
+}
