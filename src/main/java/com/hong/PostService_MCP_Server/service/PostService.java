@@ -137,6 +137,8 @@ public class PostService {
         }
     }
 
+    //TODO
+    //file 관련 기능 추가
     @Tool(description = "로그인한 회원으로 변경하고자 하는 게시글의 id, 변경하려는 제목 그리고 변경하려는 본문을 받아 게시글을 수정한다.")
     public void updatePostWithTitleAndContent(
             String authorization,

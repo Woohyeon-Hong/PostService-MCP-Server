@@ -1,39 +1,51 @@
 package com.hong.PostService_MCP_Server.service;
 
+import java.io.File;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.hong.PostService_MCP_Server.dto.file.FileInfo;
+import com.hong.PostService_MCP_Server.dto.file.UploadUrlResponses.UploadUrlResponse;
 import com.hong.PostService_MCP_Server.dto.post.Page;
 import com.hong.PostService_MCP_Server.dto.post.Page.PostSummaryResponse;
 import com.hong.PostService_MCP_Server.dto.post.PostCreateRequest;
-import com.hong.PostService_MCP_Server.dto.post.PostDetailResponse;
+import com.hong.PostService_MCP_Server.dto.post.PostCreateRequest.FileCreateRequest;
 import com.hong.PostService_MCP_Server.dto.user.LoginRequest;
 import com.hong.PostService_MCP_Server.dto.user.PasswordUpdateRequest;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
 import com.hong.PostService_MCP_Server.dto.user.SignUpRequest;
+import org.springframework.web.util.UriComponentsBuilder;
 
 
 @Service
 public class UserService {
 
     private final RestClient restClient;
+    private final FileService fileService;
+
     private final static String SERVICE_URL = "http://localhost:8080/v2/users";
-    public UserService() {
+    public UserService(FileService fileService) {
         this.restClient =  RestClient.builder()
                 .baseUrl(SERVICE_URL)
                 .defaultHeader("Origin", "http://localhost:8080")
                 .defaultHeader("Content-Type", "application/json")
                 .defaultHeader("Accept", "application/json")
                 .build();
+
+        this.fileService = fileService;
     }
 
     @Tool(description = "username, password, nickname을 받아 일반 회원가입을 진행한다.")
@@ -259,20 +271,26 @@ public class UserService {
         }
     }
 
-    @Tool(description = "로그인한 회원으로 게시글을 작성한다.")
+
+    @Tool(description = "로그인한 회원으로 제목과 본문을 포함한 새로운 게시글을 작성한다.")
     public URI writePost(
             String authorization,
-            String title,
-            String content
-    ) {
-        PostCreateRequest request = new PostCreateRequest(title, content);
+            @ToolParam(description = "작성할 게시글 제목") String title,
+            @ToolParam(description = "작성할 게시글 본문") String content,
+            @ToolParam(description = "첨부할 파일들의 목록") List<FileInfo> fileInfoList
+    )  {
+
+        List<FileCreateRequest> fileCreateRequests =  (fileInfoList != null && !fileInfoList.isEmpty())
+                ? assignFileCrateRequests(authorization, fileInfoList) : null;
+
+        PostCreateRequest postCreateRequest = new PostCreateRequest(title, content, fileCreateRequests);
 
         try {
             ResponseEntity<Void> response = restClient
                     .post()
                     .uri("/me/posts")
                     .header("Authorization", authorization)
-                    .body(request)
+                    .body(postCreateRequest)
                     .retrieve()
                     .toBodilessEntity();
 
@@ -280,6 +298,58 @@ public class UserService {
 
         } catch (RestClientException e) {
             throw new RuntimeException("게시글 작성 실패: " + e.getMessage(), e);
+        }
+    }
+
+    private ArrayList<FileCreateRequest> assignFileCrateRequests(String authorization,
+                                                                 List<FileInfo> fileInfoList) {
+
+        List<String> originalFileNames = new ArrayList<>();
+        List<File> files = new ArrayList<>();
+
+        for (FileInfo fileInfo : fileInfoList) {
+            File file = new File(fileInfo.path());
+
+            if (file.exists()) {
+                originalFileNames.add(file.getName());
+                files.add(file);
+            } else {
+                throw new RuntimeException("파일을 찾을 수 없습니다: " + fileInfo.path());
+            }
+        }
+
+        List<UploadUrlResponse> responses = fileService
+                .getUploadPresignedUrl(authorization, originalFileNames).results();
+
+        uploadFiles(responses, files);
+
+        ArrayList<FileCreateRequest> fileCreateRequests = new ArrayList<>();
+
+        for (UploadUrlResponse result : responses) {
+            fileCreateRequests.add(new FileCreateRequest(result.originalFileName(), result.s3Key()));
+        }
+
+        return fileCreateRequests;
+    }
+
+    private void uploadFiles(List<UploadUrlResponse> responses, List<File> files) {
+        try {
+            for (int i = 0; i < responses.size(); i++) {
+                UploadUrlResponse response = responses.get(i);
+                FileSystemResource fileResource = new FileSystemResource(files.get(i));
+
+                URI presignedUri = URI.create(response.uploadUrl());
+
+                // 파일 업로드 요청
+                restClient.put()
+                        .uri(presignedUri)
+                        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM_VALUE)
+                        .body(fileResource)
+                        .retrieve()
+                        .toBodilessEntity();
+            }
+        } catch (RestClientException e) {
+            throw new RuntimeException("파일 업로드 실패: " + e.getMessage(), e);
         }
     }
 }
